@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Rango - Add Page</title>
-</head>
+{% extends 'rango/base.html' %}
 
-<body>
+{% block title_block %}
+    Rango - Add Page
+{% endblock %}
+
+{% block body_block %}
 {% if category %}
     <h1>Add a Page to {{ category.name }}</h1>
     <div>
@@ -28,5 +27,4 @@
 {% endif %}
 <a href="/rango/category/{{ category.slug }}">Back to {{ category.name }}</a>
 
-</body>
-</html> 
+{%  endblock %} 
