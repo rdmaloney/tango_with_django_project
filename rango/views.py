@@ -8,8 +8,35 @@ from django.contrib.auth.decorators import login_required
 
 # Import the Category model
 from rango.models import Category
+from datetime import datetime
+
+def visitor_cookie_handler(request):
+    # First get the number of visits to the site using the COOKIES.get() function
+    # If the cookie exists the value is cast to an int, if not a default of 1 is used
+    visits = int(get_server_side_cookie(request, 'visits', '1'))
+
+    last_visit_cookie = get_server_side_cookie(request, 'last_visit', str(datetime.now()))
+
+    last_visit_time = datetime.strptime(last_visit_cookie[:-7], '%Y-%m-%d %H:%M:%S')
+
+    if(datetime.now() - last_visit_time).days > 0:
+        visits = visits +1
+        #Update the last visit cookie
+        request.session['last_visit'] = str(datetime.now())
+    else:
+        #Set the last visit cookie to the same as it was before
+        request.session['last_visit'] = last_visit_cookie
+    # Update / set the visits cookie
+    request.session['visits'] = visits
+
+def get_server_side_cookie(request, cookie, default_val = None):
+    val = request.session.get(cookie)
+    if not val:
+        val = default_val
+    return val
 
 def index(request):
+     request.session.set_test_cookie()
     # Query the database to get a list of all the categories in the database.
     # Order these by number of likes in descending order.
     # If more than 5 results show only the top 5 results.
@@ -23,9 +50,13 @@ def index(request):
     # text in the template. And add the results of the database query into the dictionary.
     context_dict = {'boldmessage': "Crunchy, creamy, cookie, candy, cupcake!",
                     'categories': category_list,
-                    'pages': most_view_pages}
+                    'pages': most_view_pages,}
 
-    return render(request, 'rango/index.html', context=context_dict)
+            visitor_cookie_handler(request)
+            context_dict['visits'] = request.session['visits']
+            response = render(request, 'rango/index.html', context=context_dict)
+
+    return response
     # Django finds the template file as refrenced in the settings, and takes the context to adapt
     # the template to add content "context". When Django encounters {{ key }} in the template file
     # it looks up the name in the context dictionary to find out what to replace it with.
@@ -59,7 +90,13 @@ def index(request):
 
 
 def about(request):
-    return render(request, 'rango/about.html')
+     if request.session.test_cookie_worked():
+        print("TEST COOKIE WORKED!")
+        request.session.delete_test_cookie()
+    visitor_cookie_handler(request)
+    context_dict = {'visits': request.session['visits']}
+    return render(request, 'rango/about.html', context_dict)
+    
 
 @login_required
 def add_category(request):
