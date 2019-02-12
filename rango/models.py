@@ -1,5 +1,19 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.template.defaultfilters import slugify
+
+class UserProfile(models.Model):
+    # To link the UserProfile to the in built User model,
+    # Inheriting the use model derectly could cause problems if other apps want to use the User model
+    user = models.OneToOneField(User)
+
+    # Additional attributes we want for or user
+    website = models.URLField(blank=True)
+    picture = models.ImageField(upload_to='profile_images', blank=True)
+    # 'profile_images' causes the the uploaded picture to be stored in the media/profile_images/ directory
+    # Overwrite the to-string method to display something useful.
+    def __str__(self):
+        return self.user.username
 
 class Category(models.Model):
     maxCharFeildLength = 128
